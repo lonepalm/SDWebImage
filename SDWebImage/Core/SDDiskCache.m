@@ -211,8 +211,8 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
     // size-based cleanup pass.  We delete the oldest files first.
     NSUInteger maxDiskSize = self.config.maxDiskSize;
     if (maxDiskSize > 0 && currentCacheSize > maxDiskSize) {
-        // Target half of our maximum cache size for this cleanup pass.
-        const NSUInteger desiredCacheSize = maxDiskSize / 2;
+        // Target 90% of our maximum cache size for this cleanup pass.
+        const NSUInteger desiredCacheSize = maxDiskSize * 9 / 10;
         
         // Sort the remaining cache files by their last modification time or last access time (oldest first).
         NSArray<NSURL *> *sortedFiles = [cacheFiles keysSortedByValueWithOptions:NSSortConcurrent
