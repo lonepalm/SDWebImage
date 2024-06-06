@@ -12,6 +12,7 @@
 #import <CommonCrypto/CommonDigest.h>
 
 static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDiskCache";
+NSString * const SDDiskCacheKeepPriorityKey = @"SDDiskCache.keepPriority";
 
 @interface SDDiskCache ()
 
@@ -162,7 +163,7 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
             break;
     }
     
-    NSArray<NSString *> *resourceKeys = @[NSURLIsDirectoryKey, cacheContentDateKey, NSURLTotalFileAllocatedSizeKey];
+    NSArray<NSString *> *resourceKeys = @[NSURLIsDirectoryKey, cacheContentDateKey, NSURLTotalFileAllocatedSizeKey, NSURLMayHaveExtendedAttributesKey];
     
     // This enumerator prefetches useful properties for our cache files.
     NSDirectoryEnumerator<NSURL *> *fileEnumerator = [self.fileManager enumeratorAtURL:diskCacheURL
@@ -182,7 +183,7 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
     for (NSURL *fileURL in fileEnumerator) {
         @autoreleasepool {
             NSError *error;
-            NSDictionary<NSString *, id> *resourceValues = [fileURL resourceValuesForKeys:resourceKeys error:&error];
+            NSMutableDictionary<NSString *, id> *resourceValues = [[fileURL resourceValuesForKeys:resourceKeys error:&error] mutableCopy];
             
             // Skip directories and errors.
             if (error || !resourceValues || [resourceValues[NSURLIsDirectoryKey] boolValue]) {
@@ -194,6 +195,26 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
             if (expirationDate && [[modifiedDate laterDate:expirationDate] isEqualToDate:expirationDate]) {
                 [urlsToDelete addObject:fileURL];
                 continue;
+            }
+            
+            resourceValues[SDDiskCacheKeepPriorityKey] = @0;
+            if ([resourceValues[NSURLMayHaveExtendedAttributesKey] boolValue]) {
+                NSData *extendedData = [SDFileAttributeHelper extendedAttribute:SDDiskCacheExtendedAttributeName atPath:fileURL.path traverseLink:NO error:nil];
+                if (extendedData) {
+                    id extendedObject;
+                    NSError *error;
+                    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:extendedData error:&error];
+                    unarchiver.requiresSecureCoding = NO;
+                    extendedObject = [unarchiver decodeTopLevelObjectForKey:NSKeyedArchiveRootObjectKey error:&error];
+                    
+                    if ([extendedObject isKindOfClass:[NSDictionary class]]) {
+                        NSDictionary *extendedDict = (NSDictionary *)extendedObject;
+                        NSNumber *keepPriority = extendedDict[SDDiskCacheKeepPriorityKey];
+                        if (keepPriority) {
+                            resourceValues[SDDiskCacheKeepPriorityKey] = keepPriority;
+                        }
+                    }
+                }
             }
             
             // Store a reference to this file and account for its total size.
@@ -214,11 +235,15 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
         // Target 90% of our maximum cache size for this cleanup pass.
         const NSUInteger desiredCacheSize = maxDiskSize * 9 / 10;
         
-        // Sort the remaining cache files by their last modification time or last access time (oldest first).
+        // Sort the remaining cache files by their keep priority (lowest first), then last modification time or last access time (oldest first).
         NSArray<NSURL *> *sortedFiles = [cacheFiles keysSortedByValueWithOptions:NSSortConcurrent
                                                                  usingComparator:^NSComparisonResult(id obj1, id obj2) {
-                                                                     return [obj1[cacheContentDateKey] compare:obj2[cacheContentDateKey]];
-                                                                 }];
+            const NSComparisonResult priorityCompare = [obj1[SDDiskCacheKeepPriorityKey] compare:obj2[SDDiskCacheKeepPriorityKey]];
+            if (priorityCompare != NSOrderedSame) {
+                return priorityCompare;
+            }
+            return [obj1[cacheContentDateKey] compare:obj2[cacheContentDateKey]];
+        }];
         
         // Delete files until we fall below our desired cache size.
         for (NSURL *fileURL in sortedFiles) {
