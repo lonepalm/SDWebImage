@@ -128,6 +128,8 @@
  */
 @property (nonatomic, strong, readonly, nonnull) SDImageCacheConfig *config;
 
+@property (nonatomic, strong, nullable) NSSet<NSString *> *_Nullable (^evictionCustomizationBlock)(void); /// Return a set of strings to preseve
+
 - (nonnull instancetype)init NS_UNAVAILABLE;
 + (nonnull instancetype)new  NS_UNAVAILABLE;
 

@@ -210,8 +210,12 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
         }
     }
     
+    NSSet<NSString *> *const keysToPreserve = self.evictionCustomizationBlock ? self.evictionCustomizationBlock() : nil;
+    
     for (NSURL *fileURL in urlsToDelete) {
-        [self.fileManager removeItemAtURL:fileURL error:nil];
+        if (![keysToPreserve containsObject:fileURL.lastPathComponent]) {
+            [self.fileManager removeItemAtURL:fileURL error:nil];
+        }
     }
     
     // If our remaining disk cache exceeds a configured maximum size, perform a second
@@ -226,6 +230,12 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
                                                                  usingComparator:^NSComparisonResult(id obj1, id obj2) {
                                                                      return [obj1[cacheContentDateKey] compare:obj2[cacheContentDateKey]];
                                                                  }];
+        
+        if (keysToPreserve.count) {
+            sortedFiles = [sortedFiles filteredArrayUsingPredicate:[NSPredicate predicateWithBlock:^BOOL(NSURL *_Nullable evaluatedObject, NSDictionary<NSString *,id> * _Nullable bindings) {
+                return ![keysToPreserve containsObject:evaluatedObject.lastPathComponent];
+            }]];
+        }
         
         // Delete files until we fall below our desired cache size.
         for (NSURL *fileURL in sortedFiles) {
