@@ -8,8 +8,6 @@
 
 #import "SDWebImageCompat.h"
 
-extern NSString * const SDDiskCacheKeepPriorityKey;
-
 @class SDImageCacheConfig;
 /**
  A protocol to allow custom disk cache used in SDImageCache.
