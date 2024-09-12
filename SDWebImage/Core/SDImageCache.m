@@ -824,8 +824,10 @@ static NSString * _defaultDiskCacheDirectory;
     
     __block NSSet<NSString *> *keysToPreserve = nil;
     if ([self.diskCache isKindOfClass:[SDDiskCache class]] && [(SDDiskCache *)self.diskCache evictionCustomizationBlock] != nil) {
+        dispatch_group_enter(group);
         void (^completion)(NSSet<NSString *> *) = ^(NSSet<NSString *> *results) {
             keysToPreserve = results;
+            dispatch_group_leave(group);
         };
         [(SDDiskCache *)self.diskCache evictionCustomizationBlock](completion);
     }
