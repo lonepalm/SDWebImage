@@ -826,8 +826,17 @@ static NSString * _defaultDiskCacheDirectory;
 }
 
 - (void)deleteOldFilesWithCompletionBlock:(nullable SDWebImageNoParamsBlock)completionBlock {
-    dispatch_async(self.ioQueue, ^{
-        [self.diskCache removeExpiredData];
+    dispatch_group_t group = dispatch_group_create();
+    
+    __block NSSet<NSString *> *keysToPreserve = nil;
+    if ([self.diskCache isKindOfClass:[SDDiskCache class]] && [(SDDiskCache *)self.diskCache evictionCustomizationBlock] != nil) {
+        void (^completion)(NSSet<NSString *> *) = ^(NSSet<NSString *> *results) {
+            keysToPreserve = results;
+        };
+        [(SDDiskCache *)self.diskCache evictionCustomizationBlock](completion);
+    }
+    dispatch_group_notify(group, self.ioQueue, ^{
+        [self.diskCache removeExpiredData:keysToPreserve];
         if (completionBlock) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 completionBlock();
@@ -845,8 +854,14 @@ static NSString * _defaultDiskCacheDirectory;
     if (!self.config.shouldRemoveExpiredDataWhenTerminate) {
         return;
     }
+    
+    // Custom eviction isn't compatible with eviction-on-terimation since it may hop through a few queues.
+    if ([self.diskCache isKindOfClass:[SDDiskCache class]] && [(SDDiskCache *)self.diskCache evictionCustomizationBlock] != nil) {
+        return;
+    }
+    
     dispatch_sync(self.ioQueue, ^{
-        [self.diskCache removeExpiredData];
+        [self.diskCache removeExpiredData:nil];
     });
 }
 #endif

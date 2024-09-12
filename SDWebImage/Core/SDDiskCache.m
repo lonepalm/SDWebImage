@@ -148,7 +148,7 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
   }
 }
 
-- (void)removeExpiredData {
+- (void)removeExpiredData:(NSSet<NSString *> *const)keysToPreserve {
     NSURL *diskCacheURL = [NSURL fileURLWithPath:self.diskCachePath isDirectory:YES];
     
     // Compute content date key to be used for tests
@@ -209,8 +209,6 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
             cacheFiles[fileURL] = resourceValues;
         }
     }
-    
-    NSSet<NSString *> *const keysToPreserve = self.evictionCustomizationBlock ? self.evictionCustomizationBlock() : nil;
     
     for (NSURL *fileURL in urlsToDelete) {
         if (![keysToPreserve containsObject:fileURL.lastPathComponent]) {

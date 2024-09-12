@@ -91,7 +91,7 @@
 /**
  Removes the expired data from the cache. You can choose the data to remove base on `ageLimit`, `countLimit` and `sizeLimit` options.
  */
-- (void)removeExpiredData;
+- (void)removeExpiredData:(nullable NSSet<NSString *> *const)keysToPreserve;
 
 /**
  The cache path for key
@@ -128,7 +128,7 @@
  */
 @property (nonatomic, strong, readonly, nonnull) SDImageCacheConfig *config;
 
-@property (nonatomic, strong, nullable) NSSet<NSString *> *_Nullable (^evictionCustomizationBlock)(void); /// Return a set of strings to preseve
+@property (nonatomic, strong, nullable) void (^evictionCustomizationBlock)(void (^_Nonnull completion)(NSSet<NSString *> *_Nullable)); /// Return a set of strings to preseve
 
 - (nonnull instancetype)init NS_UNAVAILABLE;
 + (nonnull instancetype)new  NS_UNAVAILABLE;
