@@ -50,33 +50,13 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
 - (BOOL)containsDataForKey:(NSString *)key {
     NSParameterAssert(key);
     NSString *filePath = [self cachePathForKey:key];
-    BOOL exists = [self.fileManager fileExistsAtPath:filePath];
-    
-    // fallback because of https://github.com/rs/SDWebImage/pull/976 that added the extension to the disk file name
-    // checking the key with and without the extension
-    if (!exists) {
-        exists = [self.fileManager fileExistsAtPath:filePath.stringByDeletingPathExtension];
-    }
-    
-    return exists;
+    return [self.fileManager fileExistsAtPath:filePath];
 }
 
 - (NSData *)dataForKey:(NSString *)key {
     NSParameterAssert(key);
     NSString *filePath = [self cachePathForKey:key];
-    NSData *data = [NSData dataWithContentsOfFile:filePath options:self.config.diskCacheReadingOptions error:nil];
-    if (data) {
-        return data;
-    }
-    
-    // fallback because of https://github.com/rs/SDWebImage/pull/976 that added the extension to the disk file name
-    // checking the key with and without the extension
-    data = [NSData dataWithContentsOfFile:filePath.stringByDeletingPathExtension options:self.config.diskCacheReadingOptions error:nil];
-    if (data) {
-        return data;
-    }
-    
-    return nil;
+    return [NSData dataWithContentsOfFile:filePath options:self.config.diskCacheReadingOptions error:nil];
 }
 
 - (void)setData:(NSData *)data forKey:(NSString *)key {
