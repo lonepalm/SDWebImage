@@ -56,7 +56,13 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
 - (NSData *)dataForKey:(NSString *)key {
     NSParameterAssert(key);
     NSString *filePath = [self cachePathForKey:key];
-    return [NSData dataWithContentsOfFile:filePath options:self.config.diskCacheReadingOptions error:nil];
+    NSData *data = [NSData dataWithContentsOfFile:filePath options:self.config.diskCacheReadingOptions error:nil];
+    
+    if (data) {
+        [[NSURL fileURLWithPath:filePath] setResourceValue:[NSDate date] forKey:NSURLContentAccessDateKey error:nil];
+    }
+    
+    return data;
 }
 
 - (void)setData:(NSData *)data forKey:(NSString *)key {
