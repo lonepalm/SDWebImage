@@ -139,6 +139,7 @@ static void * SDWebImageDownloaderContext = &SDWebImageDownloaderContext;
         _session = [NSURLSession sessionWithConfiguration:sessionConfiguration
                                                  delegate:self
                                             delegateQueue:nil];
+		_session.sessionDescription = @"SDWebImageDownloader";
     }
     return self;
 }
