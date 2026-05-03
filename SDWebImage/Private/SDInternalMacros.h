@@ -79,6 +79,22 @@ else OSSpinLockUnlock(&lock##_deprecated);
 #define SD_SEL_SPI(name) NSSelectorFromString([NSString stringWithFormat:@"_%@", SD_NSSTRING(name)])
 #endif
 
+#ifndef SD_OBJC_DIRECT
+#if __has_attribute(objc_direct)
+#define SD_OBJC_DIRECT __attribute__((objc_direct))
+#else
+#define SD_OBJC_DIRECT
+#endif
+#endif
+
+#ifndef SD_OBJC_DIRECT_MEMBERS
+#if __has_attribute(objc_direct_members)
+#define SD_OBJC_DIRECT_MEMBERS __attribute__((objc_direct_members))
+#else
+#define SD_OBJC_DIRECT_MEMBERS
+#endif
+#endif
+
 FOUNDATION_EXPORT os_log_t sd_getDefaultLog(void);
 
 #ifndef SD_LOG
