@@ -37,6 +37,99 @@ static id<SDImageLoader> _defaultImageLoader;
 @property (strong, nonatomic, nonnull) NSMutableSet<NSURL *> *failedURLs;
 @property (strong, nonatomic, nonnull) NSMutableSet<SDWebImageCombinedOperation *> *runningOperations;
 
+- (void)callCacheProcessForOperation:(nonnull SDWebImageCombinedOperation *)operation
+                                 url:(nonnull NSURL *)url
+                             options:(SDWebImageOptions)options
+                             context:(nullable SDWebImageContext *)context
+                            progress:(nullable SDImageLoaderProgressBlock)progressBlock
+                           completed:(nullable SDInternalCompletionBlock)completedBlock SD_OBJC_DIRECT;
+
+- (void)callOriginalCacheProcessForOperation:(nonnull SDWebImageCombinedOperation *)operation
+                                         url:(nonnull NSURL *)url
+                                     options:(SDWebImageOptions)options
+                                     context:(nullable SDWebImageContext *)context
+                                    progress:(nullable SDImageLoaderProgressBlock)progressBlock
+                                   completed:(nullable SDInternalCompletionBlock)completedBlock SD_OBJC_DIRECT;
+
+- (void)callDownloadProcessForOperation:(nonnull SDWebImageCombinedOperation *)operation
+                                    url:(nonnull NSURL *)url
+                                options:(SDWebImageOptions)options
+                                context:(SDWebImageContext *)context
+                            cachedImage:(nullable UIImage *)cachedImage
+                             cachedData:(nullable NSData *)cachedData
+                              cacheType:(SDImageCacheType)cacheType
+                               progress:(nullable SDImageLoaderProgressBlock)progressBlock
+                              completed:(nullable SDInternalCompletionBlock)completedBlock SD_OBJC_DIRECT;
+
+- (void)callTransformProcessForOperation:(nonnull SDWebImageCombinedOperation *)operation
+                                     url:(nonnull NSURL *)url
+                                 options:(SDWebImageOptions)options
+                                 context:(SDWebImageContext *)context
+                           originalImage:(nullable UIImage *)originalImage
+                            originalData:(nullable NSData *)originalData
+                               cacheType:(SDImageCacheType)cacheType
+                                finished:(BOOL)finished
+                               completed:(nullable SDInternalCompletionBlock)completedBlock SD_OBJC_DIRECT;
+
+- (void)callStoreOriginCacheProcessForOperation:(nonnull SDWebImageCombinedOperation *)operation
+                                            url:(nonnull NSURL *)url
+                                        options:(SDWebImageOptions)options
+                                        context:(SDWebImageContext *)context
+                                  originalImage:(nullable UIImage *)originalImage
+                                     cacheImage:(nullable UIImage *)cacheImage
+                                   originalData:(nullable NSData *)originalData
+                                      cacheData:(nullable NSData *)cacheData
+                                      cacheType:(SDImageCacheType)cacheType
+                                       finished:(BOOL)finished
+                                      completed:(nullable SDInternalCompletionBlock)completedBlock SD_OBJC_DIRECT;
+
+- (void)callStoreCacheProcessForOperation:(nonnull SDWebImageCombinedOperation *)operation
+                                      url:(nonnull NSURL *)url
+                                  options:(SDWebImageOptions)options
+                                  context:(SDWebImageContext *)context
+                                    image:(nullable UIImage *)image
+                                     data:(nullable NSData *)data
+                                cacheType:(SDImageCacheType)cacheType
+                                 finished:(BOOL)finished
+                                completed:(nullable SDInternalCompletionBlock)completedBlock SD_OBJC_DIRECT;
+
+- (void)safelyRemoveOperationFromRunning:(nullable SDWebImageCombinedOperation *)operation SD_OBJC_DIRECT;
+
+- (void)storeImage:(nullable UIImage *)image
+         imageData:(nullable NSData *)data
+            forKey:(nullable NSString *)key
+           options:(SDWebImageOptions)options
+           context:(nullable SDWebImageContext *)context
+        imageCache:(nonnull id<SDImageCache>)imageCache
+         cacheType:(SDImageCacheType)cacheType
+          finished:(BOOL)finished
+        completion:(nullable SDWebImageNoParamsBlock)completion SD_OBJC_DIRECT;
+
+- (void)callCompletionBlockForOperation:(nullable SDWebImageCombinedOperation *)operation
+                             completion:(nullable SDInternalCompletionBlock)completionBlock
+                                  error:(nullable NSError *)error
+                                  queue:(nullable SDCallbackQueue *)queue
+                                    url:(nullable NSURL *)url SD_OBJC_DIRECT;
+
+- (void)callCompletionBlockForOperation:(nullable SDWebImageCombinedOperation *)operation
+                             completion:(nullable SDInternalCompletionBlock)completionBlock
+                                  image:(nullable UIImage *)image
+                                   data:(nullable NSData *)data
+                                  error:(nullable NSError *)error
+                              cacheType:(SDImageCacheType)cacheType
+                               finished:(BOOL)finished
+                                  queue:(nullable SDCallbackQueue *)queue
+                                    url:(nullable NSURL *)url SD_OBJC_DIRECT;
+
+- (BOOL)shouldBlockFailedURLWithURL:(nonnull NSURL *)url
+                              error:(nonnull NSError *)error
+                            options:(SDWebImageOptions)options
+                            context:(nullable SDWebImageContext *)context;
+
+- (SDWebImageOptionsResult *)processedResultForURL:(NSURL *)url
+                                           options:(SDWebImageOptions)options
+                                           context:(SDWebImageContext *)context SD_OBJC_DIRECT;
+
 @end
 
 @implementation SDWebImageManager

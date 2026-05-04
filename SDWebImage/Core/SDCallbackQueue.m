@@ -83,7 +83,7 @@ static void SDSafeExecute(SDCallbackQueue *callbackQueue, dispatch_block_t _Nonn
     return queue;
 }
 
-- (void)sync:(nonnull dispatch_block_t)block {
+- (void)sync:(nonnull NS_NOESCAPE dispatch_block_t)block {
     switch (self.policy) {
         case SDCallbackPolicySafeExecute:
             SDSafeExecute(self, block, NO);

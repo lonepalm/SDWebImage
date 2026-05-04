@@ -75,6 +75,15 @@ static NSString * _defaultDiskCacheDirectory;
 @property (nonatomic, copy, readwrite, nonnull) NSString *diskCachePath;
 @property (nonatomic, strong, nonnull) dispatch_queue_t ioQueue;
 
+- (void)migrateDiskCacheDirectory SD_OBJC_DIRECT;
+- (void)_archivedDataWithImage:(nullable UIImage *)image forKey:(nullable NSString *)key SD_OBJC_DIRECT;
+- (void)_storeImageDataToDisk:(nullable NSData *)imageData forKey:(nullable NSString *)key SD_OBJC_DIRECT;
+- (BOOL)_diskImageDataExistsWithKey:(nullable NSString *)key SD_OBJC_DIRECT;
+- (nullable NSData *)diskImageDataBySearchingAllPathsForKey:(nullable NSString *)key SD_OBJC_DIRECT;
+- (void)_syncDiskToMemoryWithImage:(nullable UIImage *)diskImage forKey:(nullable NSString *)key SD_OBJC_DIRECT;
+- (void)_unarchiveObjectWithImage:(nullable UIImage *)image forKey:(nullable NSString *)key SD_OBJC_DIRECT;
+- (void)_removeImageFromDiskForKey:(nullable NSString *)key SD_OBJC_DIRECT;
+
 @end
 
 
