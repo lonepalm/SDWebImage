@@ -198,12 +198,75 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
     // If our remaining disk cache exceeds a configured maximum size, perform a second
     // size-based cleanup pass.  We delete the oldest files first.
     NSUInteger maxDiskSize = self.config.maxDiskSize;
-    if (maxDiskSize > 0 && currentCacheSize > maxDiskSize) {
+    if (maxDiskSize > 0) {
         // Target 90% of our maximum cache size for this cleanup pass.
-        const NSUInteger desiredCacheSize = maxDiskSize * 9 / 10;
+        NSUInteger desiredCacheSize = maxDiskSize * 9 / 10;
+        
+        // Segment files into on-platform and off-platform
+        NSMutableDictionary *onPlatformCacheFiles = [NSMutableDictionary new];
+        NSMutableDictionary *offPlatformCacheFiles = [NSMutableDictionary new];
+        __block NSUInteger offPlatformCacheSize = 0;
+        [cacheFiles enumerateKeysAndObjectsUsingBlock:^(NSURL * _Nonnull key, NSDictionary<NSString *,id> * _Nonnull obj, BOOL * _Nonnull stop) {
+            if ([[key.lastPathComponent stringByDeletingPathExtension] hasSuffix:@"-n"]) {
+                offPlatformCacheFiles[key] = obj;
+                offPlatformCacheSize += [obj[NSURLTotalFileAllocatedSizeKey] unsignedIntegerValue];
+            } else {
+                onPlatformCacheFiles[key] = obj;
+            }
+        }];
+        
+        // Off-Platform Specific Handling
+        
+        // Max age of two weeks
+        NSDate *expirationDate = [[NSDate date] dateByAddingTimeInterval:-14 * 3600 * 24];
+        
+        for (NSURL *url in offPlatformCacheFiles.allKeys) {
+            NSDictionary *cacheFile = offPlatformCacheFiles[url];
+            if ([(NSDate *)cacheFile[cacheContentDateKey] compare:expirationDate] == NSOrderedAscending) {
+                if ([self.fileManager removeItemAtURL:url error:nil]) {
+                    NSUInteger size = [cacheFile[NSURLTotalFileAllocatedSizeKey] unsignedIntegerValue];
+                    offPlatformCacheSize -= size;
+                    currentCacheSize -= size;
+                    offPlatformCacheFiles[url] = nil;
+                }
+            }
+        }
+        
+        const NSUInteger desiredOffPlatformCacheSize = desiredCacheSize * 0.1;
+        
+        if (offPlatformCacheSize > desiredOffPlatformCacheSize) {
+            // Max size 10% of total cache
+            
+            NSArray<NSURL *> *sortedOffPlatformFiles = [offPlatformCacheFiles keysSortedByValueWithOptions:NSSortConcurrent
+                                                                                           usingComparator:^NSComparisonResult(id obj1, id obj2) {
+                return [obj1[cacheContentDateKey] compare:obj2[cacheContentDateKey]];
+            }];
+            
+            for (NSURL *fileURL in sortedOffPlatformFiles) {
+                if ([self.fileManager removeItemAtURL:fileURL error:nil]) {
+                    NSDictionary<NSString *, id> *cacheFile = cacheFiles[fileURL];
+                    NSUInteger size = [cacheFile[NSURLTotalFileAllocatedSizeKey] unsignedIntegerValue];
+                    offPlatformCacheSize -= size;
+                    currentCacheSize -= size;
+                    
+                    if (offPlatformCacheSize < desiredOffPlatformCacheSize) {
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // On-Platform Specific Handling
+        
+        // Remaining space can hold on-platform media
+        desiredCacheSize = maxDiskSize * 9 / 10 - offPlatformCacheSize;
+        
+        if (currentCacheSize < desiredCacheSize) {
+            return;
+        }
         
         // Sort the remaining cache files by their last modification time or last access time (oldest first).
-        NSArray<NSURL *> *sortedFiles = [cacheFiles keysSortedByValueWithOptions:NSSortConcurrent
+        NSArray<NSURL *> *sortedFiles = [onPlatformCacheFiles keysSortedByValueWithOptions:NSSortConcurrent
                                                                  usingComparator:^NSComparisonResult(id obj1, id obj2) {
                                                                      return [obj1[cacheContentDateKey] compare:obj2[cacheContentDateKey]];
                                                                  }];
