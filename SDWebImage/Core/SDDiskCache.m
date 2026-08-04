@@ -346,9 +346,21 @@ static inline NSString * _Nonnull SDDiskCacheFileNameForKey(NSString * _Nullable
     if (ext.length > SD_MAX_FILE_EXTENSION_LENGTH) {
         ext = nil;
     }
-    NSString *filename = [NSString stringWithFormat:@"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%@",
-                          r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10],
-                          r[11], r[12], r[13], r[14], r[15], ext.length == 0 ? @"" : [NSString stringWithFormat:@".%@", ext]];
+    
+    // Retro specific filename suffix
+    NSString *suffix;
+    if (![key containsString:@"retro-media"]) {
+        // Mark files not from our CDN with "-n" meaning "-not from Retro CDN"
+        // These files will be prioritized to be removed when cleaning the cache
+        suffix = @"-n";
+    } else {
+        suffix = @"";
+    }
+    
+    NSString *filename = [NSString stringWithFormat:@"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%@%@",
+                          r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11], r[12], r[13], r[14], r[15],
+                          suffix,
+                          ext.length == 0 ? @"" : [NSString stringWithFormat:@".%@", ext]];
     return filename;
 }
 #pragma clang diagnostic pop
