@@ -202,12 +202,12 @@ static NSString * const SDDiskCacheExtendedAttributeName = @"com.hackemist.SDDis
         // Target 90% of our maximum cache size for this cleanup pass.
         NSUInteger desiredCacheSize = maxDiskSize * 9 / 10;
         
-        // Segment files into on-platform and off-platform
+        // Segment files into on-platform and off-platform (+ GIFs)
         NSMutableDictionary *onPlatformCacheFiles = [NSMutableDictionary new];
         NSMutableDictionary *offPlatformCacheFiles = [NSMutableDictionary new];
         __block NSUInteger offPlatformCacheSize = 0;
         [cacheFiles enumerateKeysAndObjectsUsingBlock:^(NSURL * _Nonnull key, NSDictionary<NSString *,id> * _Nonnull obj, BOOL * _Nonnull stop) {
-            if ([[key.lastPathComponent stringByDeletingPathExtension] hasSuffix:@"-n"]) {
+            if ([[key.lastPathComponent stringByDeletingPathExtension] hasSuffix:@"-n"] || [key.pathExtension.lowercaseString isEqualToString:@"gif"]) {
                 offPlatformCacheFiles[key] = obj;
                 offPlatformCacheSize += [obj[NSURLTotalFileAllocatedSizeKey] unsignedIntegerValue];
             } else {
